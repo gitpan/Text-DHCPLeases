@@ -1,0 +1,30 @@
+---
+name: Text-DHCPLeases
+version: v0.1
+author:
+  - 'Carlos Vicente  C<< <<cvicente@cpan.org>> >>'
+abstract: Parse DHCP Leases file from ISC dhcpd.
+license: perl
+resources:
+  license: http://dev.perl.org/licenses/
+requires:
+  Class::Struct: 0.63
+  Test::More: 0
+  perl: 5.8.0
+provides:
+  DHCPLeases::Lease::Iterator:
+    file: lib/Text/DHCPLeases/Lease/Iterator.pm
+    version: v0.1
+  Text::DHCPLeases:
+    file: lib/Text/DHCPLeases.pm
+    version: v0.1
+  Text::DHCPLeases::FPS:
+    file: lib/Text/DHCPLeases/FPS.pm
+    version: v0.1
+  Text::DHCPLeases::Lease:
+    file: lib/Text/DHCPLeases/Lease.pm
+    version: v0.1
+generated_by: Module::Build version 0.2808
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2

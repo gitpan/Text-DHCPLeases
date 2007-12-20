@@ -1,13 +1,13 @@
-package DHCPLeases::Lease::Iterator;
+package DHCPLeases::Object::Iterator;
 
 use strict;
 use warnings;
 
-use version; our $VERSION = qv('0.1');
+use version; our $VERSION = qv('0.2');
 
 =head1 NAME
 
-Text::DHCPLeases::Lease::Iterator - Lease Iterator class
+Text::DHCPLeases::Object::Iterator - Lease object iterator class
 
 =head1 SYNOPSIS
 

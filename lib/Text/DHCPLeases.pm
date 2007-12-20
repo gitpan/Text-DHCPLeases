@@ -3,11 +3,10 @@ package Text::DHCPLeases;
 use warnings;
 use strict;
 use Carp;
-use Text::DHCPLeases::Lease;
-use Text::DHCPLeases::FPS;
-use Text::DHCPLeases::Lease::Iterator;
+use Text::DHCPLeases::Object;
+use Text::DHCPLeases::Object::Iterator;
 
-use version; our $VERSION = qv('0.1');
+use version; our $VERSION = qv('0.2');
 
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 
@@ -16,17 +15,17 @@ my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 
 =head1 NAME
 
-Text::DHCPLeases - Parse DHCP Leases file from ISC dhcpd.
+Text::DHCPLeases - Parse DHCP leases file from ISC dhcpd.
 
 =head1 SYNOPSIS
 
     use Text::DHCPLeases;
 
-    my $dl = Text::DHCPLeases->new("/etc/dhcpd.leases");
+    my $leases = Text::DHCPLeases->new("/etc/dhcpd.leases");
 
-    foreach my $lease ( $dl->get_leases ){
-        print $lease->address;
-        if ( $lease->binding_state eq 'active' ){
+    foreach my $obj ( $leases->get_objects ){
+        print $obj->name;
+        if ( $obj->binding_state eq 'active' ){
            ...
     }
     ...
@@ -34,8 +33,7 @@ Text::DHCPLeases - Parse DHCP Leases file from ISC dhcpd.
 =head1 DESCRIPTION
 
 This module provides an object-oriented interface to ISC DHCPD leases files.  
-The goal is to have access to every declaration and its statements, as
-defined by the dhcpd.leases man page from the ISC dhcpd package.
+The goal is to objectify all declarations, as defined by the ISC dhcpd package man pages.
 
 This interface is useful for analyzing, reporting, converting lease files, 
 or as a tool for other applications that need to import dhcpd lease data structures.
@@ -60,7 +58,7 @@ sub new{
     my $class = ref($proto) || $proto;
     my $self = {};
     bless $self, $class;
-    $self->{_data} = $self->_parse($argv{file});
+    $self->{_objects} = $self->_parse($argv{file});
     return $self;
 }
 
@@ -70,58 +68,40 @@ sub new{
 
 
 ############################################################
-=head2 get_leases - Get lease objects
+=head2 get_objects - Get objects from leases file
 
   Arguments:
-    address - (Optional)
+    Object attributes to match (optional)
   Returns:
     Array of Text::DHCPLeases::Lease objects, 
-    or iterator depending on context
+    or iterator depending on context.  
   Examples:
-    my $it = $dhcp_leases->get_leases('192.168.0.1');
-    while ( my $lease = $it->next ) ...
+    my $it = $leases->get_objects(ip_address=>'192.168.0.1');
+    while ( my $obj = $it->next ) ...
 =cut
-sub get_leases{
-    my ($self, $address) = @_;
+sub get_objects{
+    my ($self, %argv) = @_;
     my @list;
-    if ( defined $address ){
-	@list = $self->_get_addr_leases($address);
-    }else{
-	# Use 'all' array to get real order from file
-	@list = @{$self->{_data}->{leases}->{all}};
-    }
-    wantarray? @list : DHCPLeases::Lease::Iterator->new(\@list);
-}
-
-############################################################
-=head2 get_fps - Get FPS (Failover Peer State) objects
-
-  Arguments:
-    peer name - (Optional)
-  Returns:
-    Array of Text::DHCPLeases::FPS objects, 
-    or iterator depending on context
-  Examples:
-    my $it = $dhcp_leases->get_fps('my_peer');
-    while ( my $fps = $it->next ) ...
-=cut
-sub get_fps{
-    my ($self, $name) = @_;
-    my @list;
-    if ( defined $name ){
-	foreach my $fps ( @{$self->{_data}->{fps}->{all}} ){
-	    if ( $fps->name eq $name ){
-		push @list, $fps;
+    if ( %argv ){
+	foreach my $obj ( @{$self->{_objects}} ){
+	    my $match = 1;
+	    foreach my $key ( keys %argv ){
+		if ( !defined $obj->$key || $obj->$key ne $argv{$key} ){
+		    $match = 0;
+		    last;
+		}
 	    }
+	    push @list, $obj if $match;
 	}
     }else{
-	@list = @{$self->{_data}->{fps}->{all}};
+	# Use 'all' array to get real order from file
+	@list = @{$self->{_objects}};
     }
-    wantarray? @list : DHCPLeases::FPS::Iterator->new(\@list);
+    wantarray? @list : DHCPLeases::Object::Iterator->new(\@list);
 }
 
 ############################################################
-=head2 print - Print leases object contents as formatted string
+=head2 print - Print all lease objects contents as a formatted string
 
   Arguments:
     None
@@ -133,8 +113,8 @@ sub get_fps{
 sub print{
     my ($self) = @_;
     my $out = "";
-    foreach my $lease ( $self->get_leases ){
-	$out .= $lease->print;
+    foreach my $obj ( $self->get_objects ){
+	$out .= $obj->print;
     }
     return $out;
 }
@@ -147,17 +127,6 @@ sub print{
 
 
 ############################################################
-# Return all the leases with a given address
-sub _get_addr_leases{
-    my ($self, $address) = @_;
-    croak "Missing required argument: address" unless defined $address;
-    # $list contains an reference to an array of hashes containing lease data
-    my $list = $self->{_data}->{leases}->{byaddress}->{$address} 
-    || croak "Leases with address $address not found\n";
-    return @$list;
-}
-
-############################################################
 # _parse - Populate array of objects after reading file
 #
 # Arguments:
@@ -165,30 +134,25 @@ sub _get_addr_leases{
 # Returns:
 #    Hash reference.  
 #    Key:   declaration header
-#    Value: hash ref with declaration data
+#    Value: reference to array with all objects
 #
 sub _parse {
     my ($self, $file) = @_;
-    my %data;
+    my @objects;
     my $declist = $self->_get_decl($file);
     foreach my $decl ( @$declist ){
 	my $header = $decl->{header};
 	my $lines  = $decl->{lines};
-	if ( $header =~ /lease ($IPV4)/ ){
-	    my $address = $1;
-	    my $lease_data = Text::DHCPLeases::Lease->parse($lines);
-	    my $lease = Text::DHCPLeases::Lease->new(%$lease_data);
-	    push @{$data{leases}{byaddress}{$address}}, $lease;
-	    push @{$data{leases}{all}}, $lease;
-	}elsif ( $header =~ /failover peer (.*) state/ ){
-	    my $fps_data = Text::DHCPLeases::FPS->parse($lines);
-	    my $fps = Text::DHCPLeases::FPS->new(%$fps_data);
-	    push @{$data{fps}{all}}, $fps;
+	my $obj;
+	if ( $header =~ /^(lease|host|group|subgroup|failover peer)/ ){
+	    my $obj_data = Text::DHCPLeases::Object->parse($lines);
+	    $obj = Text::DHCPLeases::Object->new(%$obj_data);
+	    push @objects, $obj;	
 	}else{
 	    croak "Text::DHCPLeases::_parse Error: Declaration header not recognized: $header\n";
 	}
     }
-    return \%data;
+    return \@objects;
 }
 
 ############################################################
@@ -214,7 +178,6 @@ sub _get_decl {
 	if ( !$open && $line =~ /^(.*) \{$/ ){
 	    $decl = {};
 	    $header = $1;
-	    $header =~ s/^(.*) \{$/$1/;
 	    $decl->{header} = $header;
   	    $open   = 1;
 	    $lines  = [];

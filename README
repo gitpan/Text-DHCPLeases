@@ -1,4 +1,4 @@
-Text::DHCPLeases version 0.1
+Text::DHCPLeases Perl Module
 
 
 INSTALLATION
@@ -17,6 +17,13 @@ make test
 make install
 
 
+DOCUMENTATION
+
+Documentation in POD format included with code.  Try the following:
+
+	 perldoc lib/Text/DHCPLeases.pm
+	 perldoc lib/Text/DHCPLeases/Object.pm
+	 perldoc lib/Text/DHCPLeases/Object/Iterator.pm
 
 COPYRIGHT AND LICENCE
 

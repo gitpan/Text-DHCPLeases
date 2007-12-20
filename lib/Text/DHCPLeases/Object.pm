@@ -1,12 +1,13 @@
-package Text::DHCPLeases::Lease;
+package Text::DHCPLeases::Object;
 
 use warnings;
 use strict;
 use Carp;
 use Class::Struct;
 
-use version; our $VERSION = qv('0.1');
+use version; our $VERSION = qv('0.2');
 
+# IPv4 regular expression
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 
 # weekday year/month/day hour:minute:second
@@ -14,22 +15,37 @@ my $DATE  = '\d+ \d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}';
 
 =head1 NAME
 
-Text::DHCPLeases::Lease - Lease class
+Text::DHCPLeases::Object - Leases Object Class
 
 =head1 SYNOPSIS
 
-my $lease = Text::DHCPLeases::Lease->new(%lease_data);
-print $lease->address;
-print $lease->binding_state;
+my $obj = Text::DHCPLeases::Object->parse($string);
+
+or 
+
+my $obj = Text::DHCPLeases::Object->new(%lease_data);
+
+print $obj->name;
+print $obj->type;
+print $obj->binding_state;
 
 =head1 DESCRIPTION
 
-Lease objects and their operations
+DHCPLeases object class.  Lease objects can be one of the following types:
+
+    lease
+    host
+    group
+    subgroup
+    failover-state
 
 =cut
 
 struct (
-'address'                 => '$',
+'type'                    => '$',
+'name'                    => '$',
+'ip_address'              => '$',
+'fixed_address'           => '$',
 'starts'                  => '$',
 'ends'                    => '$',
 'tstp'                    => '$',
@@ -41,13 +57,22 @@ struct (
 'uid'                     => '$',
 'client_hostname'         => '$',
 'abandoned'               => '$',
+'deleted'                 => '$',
+'dynamic_bootp'           => '$',
+'dynamic'                 => '$',
 'option_agent_circuit_id' => '$',
 'option_agent_remote_id'  => '$',
-'hardware'                => '%',
+'hardware_type'           => '$',
+'mac_address'             => '$',
 'set'                     => '%',
 'on'                      => '%',
 'bootp'                   => '$',
-'resrved'                 => '$',
+'reserved'                => '$',
+'my_state'                => '$',
+'my_state_date'           => '$',
+'partner_state'           => '$',
+'partner_state_date'      => '$',
+'mclt'                    => '$',
 );
 
 =head1 CLASS METHODS
@@ -55,8 +80,11 @@ struct (
 =head2 new - Constructor
 
   Arguments:
-    address
-    starts
+    type                       one of (lease|host|group|subgroup|failover-state)
+    name                       identification string (address, host name, group name, etc)
+    ip_address
+    fixed_address
+    starts                     
     ends
     tstp
     tsfp
@@ -66,26 +94,36 @@ struct (
     binding_state
     uid
     client_hostname
-    abandoned (flag)
+    abandoned                 (flag)
+    deleted                   (flag)
+    dynamic_bootp             (flag)
+    dynamic                   (flag)
     option_agent_circuit_id
     option_agent_remote_id
-    hardware (hash)
-    set (hash)
-    on (hash)
-    bootp (flag)
-    reserved (flag)
+    hardware_type
+    mac_address
+    set                       (hash)
+    on                        (hash)
+    bootp                     (flag)
+    reserved                  (flag)
+    my_state
+    my_state_date
+    partner_state
+    partner_state_date
+    mclt
   Returns:
-    New Text::DHCPLeases::Lease object
+    New Text::DHCPLeases::Object object
   Examples:
 
-    my $lease = Text::DHCPLeases::Leases->new(address => '192.168.1.10',
-                                              starts  => '3 2007/08/15 11:34:58',
-                                              ends    => '3 2007/08/15 11:44:58');
+    my $lease = Text::DHCPLeases::Object->new(type       => 'lease',
+                                              ip_address => '192.168.1.10',
+                                              starts     => '3 2007/08/15 11:34:58',
+                                              ends       => '3 2007/08/15 11:44:58');
    
 =cut
 
 ############################################################
-=head2 parse - Parse lease declaration
+=head2 parse - Parse object declaration
 
 Arguments:
    Array ref with declaration lines
@@ -111,58 +149,84 @@ my $lease_data = Text::DHCPLeases::Lease->parse($text);
 =cut
 sub parse{
     my ($self, $lines) = @_;
-    my %lease;
+    my %obj;
     for ( @$lines ){
 	next if ( /^#|^$|\}$/ );
-	if ( /lease ($IPV4) / ){
-	    $lease{address} = $1;
+	if ( /^lease ($IPV4) / ){
+	    $obj{type} = 'lease';
+	    $obj{name} = $1;
+	    $obj{'ip_address'} = $1;
+	}elsif ( /^(host|group|subgroup) (.*) / ){
+	    $obj{type} = $1;
+	    $obj{name} = $2;	
+	}elsif ( /^failover peer (.*) state/ ){
+	    $obj{type} = 'failover-state';
+	    $obj{name} = $1;	
 	}elsif ( /starts ($DATE);/ ){
-	    $lease{starts} = $1;
+	    $obj{starts} = $1;
 	}elsif ( /ends ($DATE);/ ){
-	    $lease{ends} = $1;
+	    $obj{ends} = $1;
 	}elsif ( /tstp ($DATE);/ ){
-	    $lease{tstp} = $1;
-	}elsif ( /tsfp ($DATE);/ ){
-	    $lease{tsfp} = $1;
+	    $obj{tstp} = $1;
 	}elsif ( /atsfp ($DATE);/ ){
-	    $lease{atsfp} = $1;
+	    $obj{atsfp} = $1;
+	}elsif ( /tsfp ($DATE);/ ){
+	    $obj{tsfp} = $1;
 	}elsif ( /cltt ($DATE);/ ){
-	    $lease{cltt} = $1;
+	    $obj{cltt} = $1;
 	}elsif ( /next binding state (\w+);/ ){
-	    $lease{'next_binding_state'} = $1;
+	    $obj{'next_binding_state'} = $1;
 	}elsif ( /binding state (\w+);/ ){
-	    $lease{'binding_state'} = $1;
+	    $obj{'binding_state'} = $1;
 	}elsif ( /uid (\".*\");/ ){
-	    $lease{uid} = $1;
+	    $obj{uid} = $1;
 	}elsif ( /client-hostname (\".*\");/ ){
-	    $lease{'client_hostname'} = $1;
+	    $obj{'client_hostname'} = $1;
 	}elsif ( /abandoned;/ ){
-	    $lease{abandoned} = 1;
+	    $obj{abandoned} = 1;
+	}elsif ( /deleted;/ ){
+	    $obj{deleted} = 1;
+	}elsif ( /dynamic-bootp;/ ){
+	    $obj{dynamic_bootp} = 1;
+	}elsif ( /dynamic;/ ){
+	    $obj{dynamic} = 1;
 	}elsif ( /hardware (\w+) (.*);/ ){
-	    $lease{hardware}{'hardware-type'} = $1;
-	    $lease{hardware}{'mac-address'}   = $2;
-	}elsif ( /option agent.circuit-id (\".*\");/ ){
-	    $lease{'option_agent_circuit_id'} = $1;
-	}elsif ( /option agent.remote-id (\".*\");/ ){
-	    $lease{'option_agent_remote_id'} = $1;
+	    $obj{'hardware_type'} = $1;
+	    $obj{'mac_address'}   = $2;
+	}elsif ( /fixed-address (.*);/ ){
+	    $obj{'fixed_address'} = $1;
+	}elsif ( /option agent\.circuit-id (.*);/ ){
+	    $obj{'option_agent_circuit_id'} = $1;
+	}elsif ( /option agent\.remote-id (.*);/ ){
+	    $obj{'option_agent_remote_id'} = $1;
 	}elsif ( /set (\w+) = (.*);/ ){
-	    $lease{set}{$1} = $2;
+	    $obj{set}{$1} = $2;
 	}elsif ( /on (.*) \{(.*)\};/ ){
 	    my $events     = $1;
 	    my @events = split /\|/, $events;
 	    my $statements = $2;
 	    my @statements = split /\n;/, $statements;
-	    $lease{on}{events}     = @events;
-	    $lease{on}{statements} = @statements;
+	    $obj{on}{events}     = @events;
+	    $obj{on}{statements} = @statements;
 	}elsif ( /bootp;/ ){
-	    $lease{bootp} = 1;
+	    $obj{bootp} = 1;
 	}elsif ( /reserved;/ ){
-	    $lease{reserved} = 1;
+	    $obj{reserved} = 1;
+	}elsif ( /failover peer \"(.*)\" state/ ){
+	    $obj{name} = $1;
+	}elsif ( /my state (.*) at ($DATE);/ ){
+	    $obj{my_state} = $1;
+	    $obj{my_state_date} = $2;
+	}elsif (/partner state (.*) at ($DATE);/ ){
+	    $obj{partner_state} = $1;
+	    $obj{partner_state_date} = $2;
+	}elsif (/mclt (\w+);/ ){
+	    $obj{mclt} = $1;
 	}else{
-	    croak "Text::DHCPLeases::Lease::parse Error: Statement not recognized: $_\n";
+	    croak "Text::DHCPLeases::Object::parse Error: Statement not recognized: $_\n";
 	}
     }
-    return \%lease;
+    return \%obj;
 }
 
 =head1 INSTANCE METHODS
@@ -176,12 +240,19 @@ sub parse{
   Returns:
     Formatted String
   Examples:
-    print $lease->print;
+    print $obj->print;
 =cut
 sub print{
     my ($self) = @_;
     my $out = "";
-    $out .= sprintf("lease %s {\n",   $self->address);
+    if ( $self->type eq 'lease' ){
+	$out .= sprintf("lease %s {\n", $self->ip_address);	
+    }elsif ( $self->type eq 'failover-state' ){
+	# These are printed with an extra carriage return in 3.1.0
+	$out .= sprintf("\nfailover peer %s state {\n", $self->name);	
+    }else{
+	$out .= sprintf("%s %s {\n", $self->type, $self->name);
+    }
     $out .= sprintf("  starts %s;\n", $self->starts) if $self->starts;
     $out .= sprintf("  ends %s;\n",   $self->ends)   if $self->ends;
     $out .= sprintf("  tstp %s;\n",   $self->tstp)   if $self->tstp;
@@ -192,11 +263,14 @@ sub print{
 	if $self->binding_state;
     $out .= sprintf("  next binding state %s;\n",   $self->next_binding_state)
 	if $self->next_binding_state;
-    $out .= sprintf("  hardware %s %s;\n", $self->hardware->{'hardware-type'}, 
-		    $self->hardware->{'mac-address'}) if $self->hardware;
-    $out .= sprintf("  uid %s;\n",    $self->uid)   if $self->uid;
-    $out .= sprintf("  client-hostname %s;\n", $self->client_hostname) if $self->client_hostname;
-    $out .= sprintf("  abandoned %s;\n", $self->abandoned) if $self->abandoned;
+    $out .= sprintf("  dynamic-bootp;\n") if $self->dynamic_bootp;
+    $out .= sprintf("  dynamic;\n") if $self->dynamic;
+    $out .= sprintf("  hardware %s %s;\n", $self->hardware_type, $self->mac_address) 
+	if ( $self->hardware_type && $self->mac_address );
+    $out .= sprintf("  uid %s;\n", $self->uid) if $self->uid;
+    $out .= sprintf("  fixed-address %s;\n", $self->fixed_address) if $self->fixed_address;
+    $out .= sprintf("  abandoned;\n") if $self->abandoned;
+    $out .= sprintf("  deleted;\n") if $self->abandoned;
     $out .= sprintf("  option agent.circuit-id %s;\n", $self->option_agent_circuit_id) 
 	if $self->option_agent_circuit_id;
     $out .= sprintf("  option agent.remote-id %s;\n", $self->option_agent_remote_id) 
@@ -212,9 +286,17 @@ sub print{
 	$out .= sprintf("  on %s { %s }", $events, $statements);
 
     }
+    $out .= sprintf("  client-hostname %s;\n", $self->client_hostname) if $self->client_hostname;
+    # These are only for failover-state objects
+    $out .= sprintf("  my state %s at %s;\n", $self->my_state, $self->my_state_date) 
+	if $self->my_state;
+    $out .= sprintf("  partner state %s at %s;\n", $self->partner_state, $self->partner_state_date) 
+	if $self->partner_state; 
+    $out .= sprintf("  mclt %s;\n", $self->mclt) if $self->mclt;
     $out .= "}\n";
     return $out;
 }
+
 
 # Make sure to return 1
 1;

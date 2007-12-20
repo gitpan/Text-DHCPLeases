@@ -1,5 +1,11 @@
 Revision history for <DISTRO>
 
+0.2  2007/12/20
+	**** API CHANGED ****
+	- Renamed Leases.pm to Object.pm.  This reflects changes in the code that allows it to deal with all possible kinds of declarations
+	  in the leases file (was missing objects created by OMAPI).
+	- Fixed bugs in parsing reported by John Lloyd.
+
 0.1  2007/08/21
        Initial release.
 

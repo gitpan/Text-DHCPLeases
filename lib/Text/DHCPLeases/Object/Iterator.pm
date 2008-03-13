@@ -3,7 +3,7 @@ package DHCPLeases::Object::Iterator;
 use strict;
 use warnings;
 
-use version; our $VERSION = qv('0.2');
+use version; our $VERSION = qv('0.3');
 
 =head1 NAME
 

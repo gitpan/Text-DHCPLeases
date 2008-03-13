@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use Class::Struct;
 
-use version; our $VERSION = qv('0.2');
+use version; our $VERSION = qv('0.3');
 
 # IPv4 regular expression
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
@@ -190,7 +190,7 @@ sub parse{
 	    $obj{dynamic_bootp} = 1;
 	}elsif ( /dynamic;/ ){
 	    $obj{dynamic} = 1;
-	}elsif ( /hardware (\w+) (.*);/ ){
+	}elsif ( /hardware (.+) (.+);/ ){
 	    $obj{'hardware_type'} = $1;
 	    $obj{'mac_address'}   = $2;
 	}elsif ( /fixed-address (.*);/ ){

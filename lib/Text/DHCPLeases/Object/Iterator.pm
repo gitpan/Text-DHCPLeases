@@ -3,7 +3,7 @@ package DHCPLeases::Object::Iterator;
 use strict;
 use warnings;
 
-use version; our $VERSION = qv('0.3');
+use version; our $VERSION = qv('0.4');
 
 =head1 NAME
 
@@ -40,8 +40,7 @@ sub last {
 
 sub next {
     my ($self) = @_;
-    $self->{_pos}++;
-    return $self->{_list}->[$self->{_pos}];
+    return $self->{_list}->[$self->{_pos}++];
 }
 
 # Make sure to return 1

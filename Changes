@@ -1,5 +1,8 @@
 Revision history for <DISTRO>
 
+0.4  2008/03/26
+	- Fixed bug in Iterator.pm which caused it to miss first object in list.
+
 0.3  2008/03/13
 	- Fixed regular expression in Text::DHCPLeases::Object::parse that failed when hardware-type value included non-word characters
           (i.e "token-ring").

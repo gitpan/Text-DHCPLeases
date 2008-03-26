@@ -1,6 +1,6 @@
 ---
 name: Text-DHCPLeases
-version: v0.3
+version: v0.4
 author:
   - 'Carlos Vicente  C<< <<cvicente@cpan.org>> >>'
 abstract: Parse DHCP leases file from ISC dhcpd.
@@ -15,13 +15,13 @@ requires:
 provides:
   DHCPLeases::Object::Iterator:
     file: lib/Text/DHCPLeases/Object/Iterator.pm
-    version: v0.3
+    version: v0.4
   Text::DHCPLeases:
     file: lib/Text/DHCPLeases.pm
-    version: v0.3
+    version: v0.4
   Text::DHCPLeases::Object:
     file: lib/Text/DHCPLeases/Object.pm
-    version: v0.3
+    version: v0.4
 generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

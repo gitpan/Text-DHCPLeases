@@ -1,5 +1,8 @@
 Revision history for <DISTRO>
 
+0.5  2008/06/05
+	- Fixed inconsistent licensing
+
 0.4  2008/03/26
 	- Fixed bug in Iterator.pm which caused it to miss first object in list.
 

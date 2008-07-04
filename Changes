@@ -1,5 +1,8 @@
 Revision history for <DISTRO>
 
+0.6  2008/07/03
+	- Deal with incomplete hardware address line
+
 0.5  2008/06/05
 	- Fixed inconsistent licensing
 

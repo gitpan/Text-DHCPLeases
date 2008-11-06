@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use Class::Struct;
 
-use version; our $VERSION = qv('0.6');
+use version; our $VERSION = qv('0.7');
 
 # IPv4 regular expression
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
@@ -164,7 +164,7 @@ sub parse{
 	    $obj{name} = $1;	
 	}elsif ( /starts ($DATE);/ ){
 	    $obj{starts} = $1;
-	}elsif ( /ends ($DATE);/ ){
+	}elsif ( /ends ($DATE|never);/ ){
 	    $obj{ends} = $1;
 	}elsif ( /tstp ($DATE);/ ){
 	    $obj{tstp} = $1;
@@ -223,7 +223,7 @@ sub parse{
 	}elsif (/mclt (\w+);/ ){
 	    $obj{mclt} = $1;
 	}else{
-	    croak "Text::DHCPLeases::Object::parse Error: Statement not recognized: $_\n";
+	    carp "Text::DHCPLeases::Object::parse Error: Statement not recognized: $_\n";
 	}
     }
     return \%obj;

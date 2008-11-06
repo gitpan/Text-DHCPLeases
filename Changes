@@ -1,5 +1,9 @@
 Revision history for <DISTRO>
 
+0.7  2008/11/06
+	- Changed regex to deal with 'ends never' statement
+ 	- Warn instead of die when statement not recognized
+
 0.6  2008/07/03
 	- Deal with incomplete hardware address line
 

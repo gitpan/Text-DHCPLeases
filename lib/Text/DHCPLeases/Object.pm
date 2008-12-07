@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use Class::Struct;
 
-use version; our $VERSION = qv('0.7');
+use version; our $VERSION = qv('0.8');
 
 # IPv4 regular expression
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
@@ -73,6 +73,9 @@ struct (
 'partner_state'           => '$',
 'partner_state_date'      => '$',
 'mclt'                    => '$',
+'ddns_rev_name'           => '$',
+'ddns_fwd_name'           => '$',
+'ddns_txt'                => '$'
 );
 
 =head1 CLASS METHODS
@@ -180,7 +183,7 @@ sub parse{
 	    $obj{'binding_state'} = $1;
 	}elsif ( /uid (\".*\");/ ){
 	    $obj{uid} = $1;
-	}elsif ( /client-hostname (\".*\");/ ){
+	}elsif ( /client-hostname \"(.*)\";/ ){
 	    $obj{'client_hostname'} = $1;
 	}elsif ( /abandoned;/ ){
 	    $obj{abandoned} = 1;
@@ -222,6 +225,12 @@ sub parse{
 	    $obj{partner_state_date} = $2;
 	}elsif (/mclt (\w+);/ ){
 	    $obj{mclt} = $1;
+	}elsif (/set ddns-rev-name = \"(.*)\";/){
+	    $obj{ddns_rev_name} = $1;
+	}elsif (/set ddns-fwd-name = \"(.*)\";/){
+	    $obj{ddns_fwd_name} = $1;
+	}elsif (/set ddns-txt = \"(.*)\";/){
+	    $obj{ddns_txt} = $1;
 	}else{
 	    carp "Text::DHCPLeases::Object::parse Error: Statement not recognized: $_\n";
 	}
@@ -268,6 +277,9 @@ sub print{
     $out .= sprintf("  hardware %s %s;\n", $self->hardware_type, $self->mac_address) 
 	if ( $self->hardware_type && $self->mac_address );
     $out .= sprintf("  uid %s;\n", $self->uid) if $self->uid;
+    $out .= sprintf("  set ddns-rev-name = \"%s\";\n", $self->ddns_rev_name) if $self->ddns_rev_name;
+    $out .= sprintf("  set ddns-txt = \"%s\";\n", $self->ddns_txt) if $self->ddns_txt;
+    $out .= sprintf("  set ddns-fwd-name = \"%s\";\n", $self->ddns_fwd_name) if $self->ddns_fwd_name;
     $out .= sprintf("  fixed-address %s;\n", $self->fixed_address) if $self->fixed_address;
     $out .= sprintf("  abandoned;\n") if $self->abandoned;
     $out .= sprintf("  deleted;\n") if $self->abandoned;
@@ -286,7 +298,7 @@ sub print{
 	$out .= sprintf("  on %s { %s }", $events, $statements);
 
     }
-    $out .= sprintf("  client-hostname %s;\n", $self->client_hostname) if $self->client_hostname;
+    $out .= sprintf("  client-hostname \"%s\";\n", $self->client_hostname) if $self->client_hostname;
     # These are only for failover-state objects
     $out .= sprintf("  my state %s at %s;\n", $self->my_state, $self->my_state_date) 
 	if $self->my_state;

@@ -6,7 +6,7 @@ use Carp;
 use Text::DHCPLeases::Object;
 use Text::DHCPLeases::Object::Iterator;
 
-use version; our $VERSION = qv('0.7');
+use version; our $VERSION = qv('0.8');
 
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 

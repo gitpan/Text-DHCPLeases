@@ -1,5 +1,9 @@
 Revision history for <DISTRO>
 
+0.8  2008/12/07
+        - Added support for ddns-rev-name, ddns-txt and ddns-fwd-name statements, based on patch
+          by Franck Joncourt.
+
 0.7  2008/11/06
 	- Changed regex to deal with 'ends never' statement
  	- Warn instead of die when statement not recognized

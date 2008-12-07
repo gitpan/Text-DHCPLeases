@@ -14,6 +14,9 @@ my $text = 'lease 192.168.254.55 {
   next binding state expired;
   hardware ethernet 00:11:85:5d:4e:11;
   uid "\001\000\021\205]Nh";
+  set ddns-rev-name = "55.254.168.192.in-addr.arpa.";
+  set ddns-txt = "3111337d6d6fd4fdd8ec0776f43350fc2b";
+  set ddns-fwd-name = "blah.local.domain";
   client-hostname "blah";
 }
 ';
@@ -35,7 +38,10 @@ is($lease->next_binding_state, 'expired' , 'next_binding_state');
 is($lease->hardware_type, 'ethernet' , 'hardware-type');
 is($lease->mac_address, '00:11:85:5d:4e:11' , 'mac-address');
 is($lease->uid, '"\001\000\021\205]Nh"' , 'uid');
-is($lease->client_hostname, '"blah"' , 'uid');
+is($lease->ddns_rev_name, "55.254.168.192.in-addr.arpa.", 'ddns_rev_name');
+is($lease->ddns_txt, "3111337d6d6fd4fdd8ec0776f43350fc2b", 'ddns_txt');
+is($lease->ddns_fwd_name, "blah.local.domain", 'ddns_fwd_name');
+is($lease->client_hostname, 'blah' , 'uid');
 
 my $output = $lease->print;
 is($output, $text, 'print');

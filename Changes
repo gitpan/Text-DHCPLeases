@@ -1,5 +1,9 @@
 Revision history for <DISTRO>
 
+0.9  2009/08/10 
+        - Added License text in all files
+        - Removed requirement for version.pm
+
 0.8  2008/12/07
         - Added support for ddns-rev-name, ddns-txt and ddns-fwd-name statements, based on patch
           by Franck Joncourt.
@@ -31,3 +35,8 @@ Revision history for <DISTRO>
 0.1  2007/08/21
        Initial release.
 
+
+Copyright (c) 2007-2010, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.

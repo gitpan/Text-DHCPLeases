@@ -4,8 +4,8 @@ use warnings;
 use strict;
 use Carp;
 use Class::Struct;
-
-use version; our $VERSION = qv('0.8');
+use vars qw($VERSION);
+$VERSION = '0.9';
 
 # IPv4 regular expression
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
@@ -114,6 +114,9 @@ struct (
     partner_state
     partner_state_date
     mclt
+    dns_rev_name
+    ddns_fwd_name
+    ddns_txt
   Returns:
     New Text::DHCPLeases::Object object
   Examples:
@@ -315,12 +318,12 @@ sub print{
 
 =head1 AUTHOR
 
-Carlos Vicente  C<< <<cvicente@cpan.org>> >>
+Carlos Vicente  <cvicente@cpan.org>
 
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) <2007-2010>, Carlos Vicente C<< <<cvicente@cpan.org>> >>. All rights reserved.
+Copyright (c) 2007-2010, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

@@ -68,3 +68,11 @@ is($fps->partner_state_date, '2 2007/08/14 20:51:22', 'partner_state_date');
 my $foutput = $fps->print;
 is($foutput, $ftext, 'print');
 
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (c) 2007-2010, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+
+=cut

@@ -2,8 +2,8 @@ package DHCPLeases::Object::Iterator;
 
 use strict;
 use warnings;
-
-use version; our $VERSION = qv('0.6');
+use vars qw($VERSION);
+$VERSION = '0.9';
 
 =head1 NAME
 
@@ -50,11 +50,11 @@ sub next {
 
 =head1 AUTHOR
 
-Carlos Vicente, C<< <cvicente at ns.uoregon.edu> >>
+Carlos Vicente, <cvicente@cpan.org>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) <2007-2010>, Carlos Vicente C<< <<cvicente@cpan.org>> >>. All rights reserved.
+Copyright (c) 2007-2010, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

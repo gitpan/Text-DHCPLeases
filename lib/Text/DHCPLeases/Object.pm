@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use Class::Struct;
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '1.0';
 
 # IPv4 regular expression
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
@@ -157,85 +157,89 @@ sub parse{
     my ($self, $lines) = @_;
     my %obj;
     for ( @$lines ){
-	next if ( /^#|^$|\}$/ );
-	if ( /^lease ($IPV4) / ){
+	$_ =~ s/^\s+//o;
+	$_ =~ s/\s+$//o;
+	next if ( /^#|^$|\}$/o );
+	if ( /^lease ($IPV4) /o ){
 	    $obj{type} = 'lease';
 	    $obj{name} = $1;
 	    $obj{'ip_address'} = $1;
-	}elsif ( /^(host|group|subgroup) (.*) / ){
+	}elsif ( /^(host|group|subgroup) (.*) /o ){
 	    $obj{type} = $1;
 	    $obj{name} = $2;	
-	}elsif ( /^failover peer (.*) state/ ){
+	}elsif ( /^failover peer (.*) state/o ){
 	    $obj{type} = 'failover-state';
 	    $obj{name} = $1;	
-	}elsif ( /starts ($DATE);/ ){
+	}elsif ( /starts ($DATE);/o ){
 	    $obj{starts} = $1;
-	}elsif ( /ends ($DATE|never);/ ){
+	}elsif ( /ends ($DATE|never);/o ){
 	    $obj{ends} = $1;
-	}elsif ( /tstp ($DATE);/ ){
+	}elsif ( /tstp ($DATE|never);/o ){
 	    $obj{tstp} = $1;
-	}elsif ( /atsfp ($DATE);/ ){
+	}elsif ( /atsfp ($DATE|never);/o ){
 	    $obj{atsfp} = $1;
-	}elsif ( /tsfp ($DATE);/ ){
+	}elsif ( /tsfp ($DATE|never);/o ){
 	    $obj{tsfp} = $1;
-	}elsif ( /cltt ($DATE);/ ){
+	}elsif ( /cltt ($DATE);/o ){
 	    $obj{cltt} = $1;
-	}elsif ( /next binding state (\w+);/ ){
+	}elsif ( /^next binding state (\w+);/o ){
 	    $obj{'next_binding_state'} = $1;
-	}elsif ( /binding state (\w+);/ ){
+	}elsif ( /^binding state (\w+);/o ){
 	    $obj{'binding_state'} = $1;
-	}elsif ( /uid (\".*\");/ ){
+	}elsif ( /^rewind binding state (\w+);/o ){
+	    $obj{'rewind_binding_state'} = $1;	
+	}elsif ( /uid (\".*\");/o ){
 	    $obj{uid} = $1;
-	}elsif ( /client-hostname \"(.*)\";/ ){
+	}elsif ( /client-hostname \"(.*)\";/o ){
 	    $obj{'client_hostname'} = $1;
-	}elsif ( /abandoned;/ ){
+	}elsif ( /abandoned;/o ){
 	    $obj{abandoned} = 1;
-	}elsif ( /deleted;/ ){
+	}elsif ( /deleted;/o ){
 	    $obj{deleted} = 1;
-	}elsif ( /dynamic-bootp;/ ){
+	}elsif ( /dynamic-bootp;/o ){
 	    $obj{dynamic_bootp} = 1;
-	}elsif ( /dynamic;/ ){
+	}elsif ( /dynamic;/o ){
 	    $obj{dynamic} = 1;
-	}elsif ( /hardware (.+) (.*);/ ){
+	}elsif ( /hardware (.+) (.*);/o ){
 	    $obj{'hardware_type'} = $1;
 	    $obj{'mac_address'}   = $2;
-	}elsif ( /fixed-address (.*);/ ){
+	}elsif ( /fixed-address (.*);/o ){
 	    $obj{'fixed_address'} = $1;
-	}elsif ( /option agent\.circuit-id (.*);/ ){
+	}elsif ( /option agent\.circuit-id (.*);/o ){
 	    $obj{'option_agent_circuit_id'} = $1;
-	}elsif ( /option agent\.remote-id (.*);/ ){
+	}elsif ( /option agent\.remote-id (.*);/o ){
 	    $obj{'option_agent_remote_id'} = $1;
-	}elsif ( /set (\w+) = (.*);/ ){
+	}elsif ( /set (\w+) = (.*);/o ){
 	    $obj{set}{$1} = $2;
-	}elsif ( /on (.*) \{(.*)\};/ ){
+	}elsif ( /on (.*) \{(.*)\};/o ){
 	    my $events     = $1;
 	    my @events = split /\|/, $events;
 	    my $statements = $2;
 	    my @statements = split /\n;/, $statements;
 	    $obj{on}{events}     = @events;
 	    $obj{on}{statements} = @statements;
-	}elsif ( /bootp;/ ){
+	}elsif ( /bootp;/o ){
 	    $obj{bootp} = 1;
-	}elsif ( /reserved;/ ){
+	}elsif ( /reserved;/o ){
 	    $obj{reserved} = 1;
-	}elsif ( /failover peer \"(.*)\" state/ ){
+	}elsif ( /failover peer \"(.*)\" state/o ){
 	    $obj{name} = $1;
-	}elsif ( /my state (.*) at ($DATE);/ ){
+	}elsif ( /my state (.*) at ($DATE);/o ){
 	    $obj{my_state} = $1;
 	    $obj{my_state_date} = $2;
-	}elsif (/partner state (.*) at ($DATE);/ ){
+	}elsif (/partner state (.*) at ($DATE);/o ){
 	    $obj{partner_state} = $1;
 	    $obj{partner_state_date} = $2;
-	}elsif (/mclt (\w+);/ ){
+	}elsif (/mclt (\w+);/o ){
 	    $obj{mclt} = $1;
-	}elsif (/set ddns-rev-name = \"(.*)\";/){
+	}elsif (/set ddns-rev-name = \"(.*)\";/o){
 	    $obj{ddns_rev_name} = $1;
-	}elsif (/set ddns-fwd-name = \"(.*)\";/){
+	}elsif (/set ddns-fwd-name = \"(.*)\";/o){
 	    $obj{ddns_fwd_name} = $1;
-	}elsif (/set ddns-txt = \"(.*)\";/){
+	}elsif (/set ddns-txt = \"(.*)\";/o){
 	    $obj{ddns_txt} = $1;
 	}else{
-	    carp "Text::DHCPLeases::Object::parse Error: Statement not recognized: $_\n";
+	    carp "Text::DHCPLeases::Object::parse Error: Statement not recognized: '$_'\n";
 	}
     }
     return \%obj;
@@ -323,7 +327,7 @@ Carlos Vicente  <cvicente@cpan.org>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2007-2010, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
+Copyright (c) 2012, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

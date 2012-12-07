@@ -6,7 +6,7 @@ use Carp;
 use Text::DHCPLeases::Object;
 use Text::DHCPLeases::Object::Iterator;
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '1.0';
 
 my $IPV4  = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
 
@@ -144,12 +144,12 @@ sub _parse {
 	my $header = $decl->{header};
 	my $lines  = $decl->{lines};
 	my $obj;
-	if ( $header =~ /^(lease|host|group|subgroup|failover peer)/ ){
+	if ( $header =~ /^(lease|host|group|subgroup|failover peer)/o ){
 	    my $obj_data = Text::DHCPLeases::Object->parse($lines);
 	    $obj = Text::DHCPLeases::Object->new(%$obj_data);
 	    push @objects, $obj;	
 	}else{
-	    croak "Text::DHCPLeases::_parse Error: Declaration header not recognized: $header\n";
+	    croak "Text::DHCPLeases::_parse Error: Declaration header not recognized: '$header'\n";
 	}
     }
     return \@objects;
@@ -173,9 +173,8 @@ sub _get_decl {
     my $decl;
     while ( <FILE> ){
 	my $line = $_;
-	$line =~ s/^\s*(.*)\s*$/$1/;
-	next if ( $line =~ /^#|^$/ );
-	if ( !$open && $line =~ /^(.*) \{$/ ){
+	next if ( $line =~ /^#|^$/o );
+	if ( !$open && $line =~ /^(.*) \{$/o ){
 	    $decl = {};
 	    $header = $1;
 	    $decl->{header} = $header;
@@ -185,9 +184,9 @@ sub _get_decl {
 	    next;
 	}
 	if ( $open ){
-	    if ( $line =~ /^\}$/ ){
+	    if ( $line =~ /^\}$/o ){
 		$open = 0;
-		$decl->{lines}  = $lines;
+		$decl->{lines} = $lines;
 		push @list, $decl;
 		$header = "";
 		push @$lines, $line;
@@ -223,7 +222,7 @@ Carlos Vicente  <cvicente@cpan.org>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2007-2010, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
+Copyright (c) 2012, Carlos Vicente <cvicente@cpan.org>. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
